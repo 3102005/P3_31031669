@@ -322,10 +322,10 @@ app.use(function(req, res, next) {
 
 // Manejador de errores general
 app.use(function(err, req, res, next) {
-  console.error(err.stack);
+  console.error('❌ Error del servidor:', err.stack);
   res.status(500).json({
     status: 'error',
-    message: 'Error interno del servidor'
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Error interno del servidor'
   });
 });
 

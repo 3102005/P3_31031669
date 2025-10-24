@@ -13,6 +13,15 @@ const authController = {
         });
       }
 
+      // Validar formato de email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({
+          status: 'fail',
+          message: 'Formato de email inválido'
+        });
+      }
+
       const result = await AuthService.register({
         nombreCompleto,
         email,
@@ -23,6 +32,7 @@ const authController = {
 
       res.status(201).json(result);
     } catch (error) {
+      console.error('Error en register:', error);
       res.status(400).json({
         status: 'fail',
         message: error.message
@@ -44,6 +54,7 @@ const authController = {
       const result = await AuthService.login(email, password);
       res.json(result);
     } catch (error) {
+      console.error('Error en login:', error);
       res.status(401).json({
         status: 'fail',
         message: error.message
