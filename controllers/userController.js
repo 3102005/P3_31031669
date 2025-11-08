@@ -1,81 +1,156 @@
-const UserService = require('../services/userService');
+const User = require('../models/User');
 
-const userController = {
-  async getAllUsers(req, res) {
-    try {
-      const users = await UserService.getAllUsers();
-      res.json({
-        status: 'success',
-        data: users
-      });
-    } catch (error) {
-      res.status(500).json({
-        status: 'error',
-        message: 'Error obteniendo usuarios'
-      });
-    }
-  },
-
-  async getUserById(req, res) {
-    try {
-      const user = await UserService.getUserById(req.params.id);
-      res.json({
-        status: 'success',
-        data: user
-      });
-    } catch (error) {
-      res.status(404).json({
-        status: 'fail',
-        message: error.message
-      });
-    }
-  },
-
-  async createUser(req, res) {
-    try {
-      const user = await UserService.createUser(req.body);
-      res.status(201).json({
-        status: 'success',
-        data: user
-      });
-    } catch (error) {
-      res.status(400).json({
-        status: 'fail',
-        message: error.message
-      });
-    }
-  },
-
-  async updateUser(req, res) {
-    try {
-      const user = await UserService.updateUser(req.params.id, req.body);
-      res.json({
-        status: 'success',
-        data: user
-      });
-    } catch (error) {
-      const statusCode = error.message.includes('no encontrado') ? 404 : 400;
-      res.status(statusCode).json({
-        status: 'fail',
-        message: error.message
-      });
-    }
-  },
-
-  async deleteUser(req, res) {
-    try {
-      const result = await UserService.deleteUser(req.params.id);
-      res.json({
-        status: 'success',
-        data: result
-      });
-    } catch (error) {
-      res.status(404).json({
-        status: 'fail',
-        message: error.message
-      });
-    }
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: ['id', 'nombreCompleto', 'email', 'cedula', 'seccion', 'createdAt', 'updatedAt']
+    });
+    
+    res.status(200).json({
+      status: 'success',
+      data: users
+    });
+  } catch (error) {
+    console.error('userController.getAllUsers error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal server error'
+    });
   }
 };
 
-module.exports = userController;
+const getUserById = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id, {
+      attributes: ['id', 'nombreCompleto', 'email', 'cedula', 'seccion', 'createdAt', 'updatedAt']
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'User not found'
+      });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal server error'
+    });
+  }
+};
+
+const createUser = async (req, res) => {
+  try {
+    const { nombreCompleto, email, password, cedula, seccion } = req.body;
+
+    if (!nombreCompleto || !email || !password || !cedula || !seccion) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'nombreCompleto, email, password, cedula y seccion son obligatorios'
+      });
+    }
+
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(409).json({
+        status: 'fail',
+        message: 'User already exists with this email'
+      });
+    }
+    const user = await User.create({ nombreCompleto, email, password, cedula, seccion });
+
+    res.status(201).json({
+      status: 'success',
+      data: {
+        id: user.id,
+        nombreCompleto: user.nombreCompleto,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.error('userController.createUser error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal server error'
+    });
+  }
+};
+
+const updateUser = async (req, res) => {
+  try {
+  const { nombreCompleto, email, cedula, seccion } = req.body;
+  const user = await User.findByPk(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'User not found'
+      });
+    }
+
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ where: { email } });
+      if (existingUser) {
+        return res.status(409).json({
+          status: 'fail',
+          message: 'Email already in use'
+        });
+      }
+    }
+
+  await user.update({ nombreCompleto, email, cedula, seccion });
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        id: user.id,
+        nombreCompleto: user.nombreCompleto,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal server error'
+    });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'User not found'
+      });
+    }
+
+    await user.destroy();
+
+    res.status(200).json({
+      status: 'success',
+      data: null,
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal server error'
+    });
+  }
+};
+
+module.exports = {
+  getAllUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser
+};

@@ -3,20 +3,28 @@ const User = require('./User');
 
 async function initializeDatabase() {
   try {
-    console.log('🔄 Inicializando base de datos...');
+    if (process.env.NODE_ENV !== 'test') {
+      console.log('🔄 Inicializando base de datos...');
+    }
     
     // Autenticar conexión
     await sequelize.authenticate();
-    console.log('✅ Conexión a la base de datos establecida correctamente.');
+    
+    if (process.env.NODE_ENV !== 'test') {
+      console.log('✅ Conexión a la base de datos establecida correctamente.');
+    }
     
     // Sincronizar modelos
     await sequelize.sync({ 
       force: process.env.NODE_ENV === 'test',
       alter: process.env.NODE_ENV === 'development'
     });
-    console.log('✅ Modelos sincronizados con la base de datos.');
     
-    // Crear usuario admin solo en desarrollo
+    if (process.env.NODE_ENV !== 'test') {
+      console.log('✅ Modelos sincronizados con la base de datos.');
+    }
+    
+    // Crear usuario admin solo en desarrollo (no en test)
     if (process.env.NODE_ENV === 'development') {
       try {
         const existingAdmin = await User.findOne({ where: { email: 'admin@example.com' } });
@@ -29,11 +37,9 @@ async function initializeDatabase() {
             seccion: 'Administración'
           });
           console.log('✅ Usuario administrador creado: admin@example.com / admin123');
-        } else {
-          console.log('ℹ️ Usuario administrador ya existe');
         }
       } catch (error) {
-        console.log('❌ Error creando usuario admin:', error.message);
+        console.log('ℹ️ Usuario administrador ya existe o no se pudo crear');
       }
     }
     

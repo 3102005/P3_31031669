@@ -12,7 +12,7 @@ var http = require('http');
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3001');
+var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 /**
@@ -20,14 +20,45 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
-
 /**
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
+// Sincronizar base de datos antes de arrancar el servidor
+const { syncDatabase } = require('../database');
+
+// Manejo global de errores no atrapados para evitar salidas silenciosas
+process.on('unhandledRejection', (reason, p) => {
+  console.error('Unhandled Rejection at:', p, 'reason:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception thrown:', err);
+  // Dependiendo de la política, podríamos process.exit(1) aquí. Por ahora sólo logueamos.
+});
+
+async function startServer() {
+  try {
+    await syncDatabase();
+    server.listen(port);
+    console.log('Starting server (listen called) on port ' + port);
+    server.on('error', onError);
+    server.on('listening', onListening);
+  } catch (err) {
+    console.error('Failed to sync database, starting server anyway. Error:', err);
+    // Intentamos arrancar el servidor aunque falle la sincronización para que la API esté disponible
+    try {
+      server.listen(port);
+      console.log('Starting server (fallback) on port ' + port);
+      server.on('error', onError);
+      server.on('listening', onListening);
+    } catch (e) {
+      console.error('Failed to start server after DB sync failure:', e);
+      process.exit(1);
+    }
+  }
+}
+
+startServer();
 
 /**
  * Normalize a port into a number, string, or false.
@@ -87,4 +118,6 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
+  // Mostrar siempre en consola para que `npm start` muestre el estado del servidor
+  console.log('Server is listening on ' + bind);
 }

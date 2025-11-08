@@ -1,0 +1,302 @@
+# swagger.yaml
+openapi: 3.0.0
+info:
+  title: API DE 31031669 - Tarea 1
+  description: |
+    API RESTful con autenticación JWT y gestión de usuarios
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Servidor local
+  - url: https://p3-31031669-2.onrender.com
+    description: Servidor de producción
+
+tags:
+  - name: auth
+    description:
+  - name: users
+    description:
+  - name: system
+    description:
+
+paths:
+  
+
+  /ping:
+    get:
+      tags:
+        - system
+      summary: Ping al servidor
+      responses:
+        '200':
+          description: Respuesta exitosa
+
+  /about:
+    get:
+      tags:
+        - system
+      summary: Información del desarrollador
+      responses:
+        '200':
+          description: Información del desarrolladora
+          content:
+            application/json:
+              example:
+                status: "success"
+                data:
+                  nombreCompleto: "Cristhian Alfonzo Angyalbert Padrón Álvarez"
+                  cedula: "31031669"
+                  seccion: "1"
+
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: Registrar nuevo usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fullName
+                - email
+                - password
+                - cedula
+              properties:
+                fullName:
+                  type: string
+                  example: "Adriana Padron"
+                email:
+                  type: string
+                  example: "adri@example.com"
+                password:
+                  type: string
+                  example: "password123"
+                cedula:
+                  type: string
+                  example: "12345678"
+      responses:
+        '201':
+          description: Usuario registrado exitosamente
+          content:
+            application/json:
+              example:
+                status: "success"
+                data:
+                  user:
+                    id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    fullName: "Adriana Padron"
+                    email: "adri@example.com"
+                    cedula: "12345678"
+                  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: "adri@example.com"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              example:
+                status: "success"
+                data:
+                  user:
+                    id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    fullName: "Adriana Padron"
+                    email: "adri@example.com"
+                    cedula: "12345678"
+                  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+  /users:
+    get:
+      tags:
+        - users
+      summary: Obtener todos los usuarios
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios obtenida exitosamente
+          content:
+            application/json:
+              example:
+                status: "success"
+                data:
+                  - id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    fullName: "Adriana Padron"
+                    email: "adri@example.com"
+                    cedula: "12345678"
+                    createdAt: "2024-01-01T00:00:00.000Z"
+                    updatedAt: "2024-01-01T00:00:00.000Z"
+                  - id: "b2c3d4e5-f6g7-8901-bcde-f23456789012"
+                    fullName: "Adriana Padron"
+                    email: "adri@example.com"
+                    cedula: "87654321"
+                    createdAt: "2024-01-01T00:00:00.000Z"
+                    updatedAt: "2024-01-01T00:00:00.000Z"
+
+    post:
+      tags:
+        - users
+      summary: Crear nuevo usuario
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fullName
+                - email
+                - password
+                - cedula
+              properties:
+                fullName:
+                  type: string
+                  example: "Adriana Padron"
+                email:
+                  type: string
+                  example: "adri@example.com"
+                password:
+                  type: string
+                  example: "password123"
+                cedula:
+                  type: string
+                  example: "11223344"
+      responses:
+        '201':
+          description: Usuario creado exitosamente
+          content:
+            application/json:
+              example:
+                status: "success"
+                data:
+                  id: "c3d4e5f6-g7h8-9012-cdef-345678901234"
+                  fullName: "Adriana Padron"
+                  email: "adri@example.com"
+                  cedula: "11223344"
+                  createdAt: "2024-01-01T00:00:00.000Z"
+                  updatedAt: "2024-01-01T00:00:00.000Z"
+
+  /users/{id}:
+    get:
+      tags:
+        - users
+      summary: Obtener usuario por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Usuario encontrado
+          content:
+            application/json:
+              example:
+                status: "success"
+                data:
+                  id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  fullName: "Adriana Padron"
+                  email: "adri@example.com"
+                  cedula: "12345678"
+                  createdAt: "2024-01-01T00:00:00.000Z"
+                  updatedAt: "2024-01-01T00:00:00.000Z"
+
+    put:
+      tags:
+        - users
+      summary: Actualizar usuario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  example: "Adriana Padron"
+                email:
+                  type: string
+                  example: "adri.p@example.com"
+                cedula:
+                  type: string
+                  example: "12345678"
+      responses:
+        '200':
+          description: Usuario actualizado exitosamente
+          content:
+            application/json:
+              example:
+                status: "success"
+                data:
+                  id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  fullName: "Adriana Padron"
+                  email: "adri.p@example.com"
+                  cedula: "12345678"
+                  updatedAt: "2024-01-02T00:00:00.000Z"
+
+    delete:
+      tags:
+        - users
+      summary: Eliminar usuario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Usuario eliminado exitosamente
+          content:
+            application/json:
+              example:
+                status: "success"
+                data: null
+                message: "User deleted successfully"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

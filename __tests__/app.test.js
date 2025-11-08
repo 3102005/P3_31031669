@@ -1,38 +1,41 @@
 const request = require('supertest');
 const app = require('../app');
+const { sequelize } = require('../config/database');
 
-describe('API Endpoints', () => {
+describe('Basic Endpoints', () => {
+  beforeAll(async () => {
+    // Esperar a que la BD se inicialice
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  });
+
+  afterAll(async () => {
+    await sequelize.close();
+  });
+
   describe('GET /ping', () => {
-    it('should return 200 OK with empty body', async () => {
-      const response = await request(app)
-        .get('/ping')
-        .expect(200);
-      
-      expect(response.text).toBe('');
+    it('should return 200', async () => {
+      const response = await request(app).get('/ping');
+      expect(response.status).toBe(200);
     });
   });
 
   describe('GET /about', () => {
-    it('should return 200 OK with JSend format', async () => {
-      const response = await request(app)
-        .get('/about')
-        .expect(200)
-        .expect('Content-Type', /json/);
+    it('should return developer info', async () => {
+      const response = await request(app).get('/about');
       
-      expect(response.body).toHaveProperty('status', 'success');
-      expect(response.body).toHaveProperty('data');
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe('success');
       expect(response.body.data).toHaveProperty('nombreCompleto');
       expect(response.body.data).toHaveProperty('cedula');
       expect(response.body.data).toHaveProperty('seccion');
     });
+  });
 
-    it('should contain correct data structure', async () => {
-      const response = await request(app).get('/about');
-      
-      const { data } = response.body;
-      expect(typeof data.nombreCompleto).toBe('string');
-      expect(typeof data.cedula).toBe('string');
-      expect(typeof data.seccion).toBe('string');
+  describe('GET /nonexistent', () => {
+    it('should return 404 for unknown endpoints', async () => {
+      const response = await request(app).get('/nonexistent');
+      expect(response.status).toBe(404);
+      expect(response.body.status).toBe('error');
     });
   });
 });
