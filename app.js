@@ -39,8 +39,8 @@ app.get('/about', (req, res) => {
   res.status(200).json({
     status: 'success',
     data: {
-      nombreCompleto: "Estefani Jeannielys Gonzalez Gonzalez",
-      cedula: "32057736",
+      nombreCompleto: "Cristhian Alfonzo Angyalbert Padrón Álvarez",
+      cedula: "31031669",
       seccion: "1"
     }
   });
