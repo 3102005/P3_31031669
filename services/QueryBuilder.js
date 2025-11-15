@@ -5,45 +5,53 @@ class ProductQueryBuilder {
     this.query = {
       where: {},
       include: [],
-      order: [['createdAt', 'DESC']]
+      distinct: true
     };
   }
 
   paginate(page = 1, limit = 10) {
-    const offset = (page - 1) * limit;
+    const offset = (page - 1) * parseInt(limit);
     this.query.offset = offset;
     this.query.limit = parseInt(limit);
     return this;
   }
 
-  filterByCategory(categoryId) {
-    if (categoryId) {
+  filterByCategory(category) {
+    if (category) {
       this.query.include.push({
-        association: 'category',
-        where: { id: categoryId },
+        model: require('../models/Category'),
+        as: 'category',
+        where: { 
+          [Op.or]: [
+            { id: category },
+            { name: { [Op.like]: `%${category}%` } }
+          ]
+        },
         required: true
       });
     }
     return this;
   }
 
-  filterByTags(tagIds) {
-    if (tagIds) {
-      const tagArray = Array.isArray(tagIds) ? tagIds : tagIds.split(',');
+  filterByTags(tags) {
+    if (tags) {
+      const tagIds = Array.isArray(tags) ? tags : tags.split(',');
       this.query.include.push({
-        association: 'tags',
-        where: { id: { [Op.in]: tagArray } },
+        model: require('../models/Tag'),
+        as: 'tags',
+        where: { id: { [Op.in]: tagIds } },
+        through: { attributes: [] },
         required: true
       });
     }
     return this;
   }
 
-  filterByPrice(min, max) {
-    if (min || max) {
+  filterByPrice(price_min, price_max) {
+    if (price_min || price_max) {
       this.query.where.price = {};
-      if (min) this.query.where.price[Op.gte] = parseFloat(min);
-      if (max) this.query.where.price[Op.lte] = parseFloat(max);
+      if (price_min) this.query.where.price[Op.gte] = parseFloat(price_min);
+      if (price_max) this.query.where.price[Op.lte] = parseFloat(price_max);
     }
     return this;
   }
@@ -58,7 +66,7 @@ class ProductQueryBuilder {
     return this;
   }
 
-  // Filtros personalizados para Avengers Funko Pop
+  // Filtros personalizados Avengers Funko Pop
   filterByMovie(movie) {
     if (movie) {
       this.query.where.movie = { [Op.like]: `%${movie}%` };
@@ -80,27 +88,23 @@ class ProductQueryBuilder {
     return this;
   }
 
-  filterByExclusive(isExclusive) {
-    if (isExclusive !== undefined) {
-      this.query.where.isExclusive = isExclusive === 'true';
-    }
-    return this;
-  }
-
   build() {
-    // Asegurar que las inclusiones sean únicas
-    const uniqueIncludes = [];
-    const includeMap = new Map();
+    // Incluir relaciones básicas si no están presentes
+    if (!this.query.include.find(inc => inc.as === 'category')) {
+      this.query.include.push({
+        model: require('../models/Category'),
+        as: 'category'
+      });
+    }
     
-    this.query.include.forEach(include => {
-      const key = include.association;
-      if (!includeMap.has(key)) {
-        includeMap.set(key, include);
-        uniqueIncludes.push(include);
-      }
-    });
-    
-    this.query.include = uniqueIncludes;
+    if (!this.query.include.find(inc => inc.as === 'tags')) {
+      this.query.include.push({
+        model: require('../models/Tag'),
+        as: 'tags',
+        through: { attributes: [] }
+      });
+    }
+
     return this.query;
   }
 }

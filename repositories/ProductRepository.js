@@ -1,4 +1,5 @@
 const { Product, Category, Tag } = require('../models/associations');
+const { Op } = require('sequelize');
 const ProductQueryBuilder = require('../services/QueryBuilder');
 
 class ProductRepository {
@@ -13,8 +14,7 @@ class ProductRepository {
       search,
       movie,
       character,
-      edition,
-      isExclusive
+      edition
     } = filters;
 
     const queryBuilder = new ProductQueryBuilder()
@@ -25,27 +25,18 @@ class ProductRepository {
       .search(search)
       .filterByMovie(movie)
       .filterByCharacter(character)
-      .filterByEdition(edition)
-      .filterByExclusive(isExclusive);
+      .filterByEdition(edition);
 
     const query = queryBuilder.build();
     
-    // Incluir relaciones básicas
-    if (!query.include.find(inc => inc.association === 'category')) {
-      query.include.push({ association: 'category' });
-    }
-    if (!query.include.find(inc => inc.association === 'tags')) {
-      query.include.push({ association: 'tags' });
-    }
-
     return await Product.findAndCountAll(query);
   }
 
   async findById(id) {
     return await Product.findByPk(id, {
       include: [
-        { association: 'category' },
-        { association: 'tags' }
+        { model: Category, as: 'category' },
+        { model: Tag, as: 'tags', through: { attributes: [] } }
       ]
     });
   }
@@ -54,22 +45,14 @@ class ProductRepository {
     return await Product.findOne({
       where: { slug },
       include: [
-        { association: 'category' },
-        { association: 'tags' }
+        { model: Category, as: 'category' },
+        { model: Tag, as: 'tags', through: { attributes: [] } }
       ]
     });
   }
 
   async create(productData) {
-    const p = await Product.create(productData);
-    try {
-      console.log('DEBUG Product created:', { id: p.id, slug: p.slug });
-      const all = await Product.findAll();
-      console.log('DEBUG All products count:', all.length, 'first:', all[0] && all[0].toJSON && all[0].toJSON());
-    } catch (e) {
-      // ignore logging errors
-    }
-    return p;
+    return await Product.create(productData);
   }
 
   async update(id, productData) {
@@ -87,12 +70,22 @@ class ProductRepository {
     return product;
   }
 
-  async generateSlug(name, sku) {
-    const baseSlug = `${name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${sku.toLowerCase()}`;
+  async generateSlug(name, sku, existingId = null) {
+    const baseSlug = `${name.toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')}-${sku.toLowerCase()}`;
+    
     let slug = baseSlug;
     let counter = 1;
 
-    while (await this.findBySlug(slug)) {
+    while (true) {
+      const where = { slug };
+      if (existingId) where.id = { [Op.ne]: existingId };
+
+      const existing = await Product.findOne({ where });
+
+      if (!existing) break;
       slug = `${baseSlug}-${counter}`;
       counter++;
     }

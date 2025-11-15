@@ -1,7 +1,7 @@
 ---
 openapi: 3.0.0
 info:
-  title: API DE 31031669 - Tarea 1
+  title: API DE 31031669 - Tarea 2
   description: |
     API RESTful con autenticación JWT y gestión de usuarios
   version: 1.0.0
@@ -17,20 +17,20 @@ servers:
     description: Servidor de producción
 
 tags:
-  - name: system
-    description: Endpoints del sistema (ping, about)
-  - name: auth
-    description: Endpoints de autenticación (register, login)
-  - name: users
-    description: Gestión de usuarios
   - name: Public - Products
-    description: Endpoints públicos para productos
-  - name: Admin - Products
-    description: Endpoints administrativos para productos
+    description: Endpoints públicos para consulta de productos
+  - name: Admin - Products  
+    description: Gestión de productos (requiere autenticación)
   - name: Admin - Categories
-    description: Endpoints administrativos para categorías
+    description: Gestión de categorías (requiere autenticación)
   - name: Admin - Tags
-    description: Endpoints administrativos para etiquetas
+    description: Gestión de etiquetas (requiere autenticación)
+  - name: Public - Info
+    description: Información pública del sistema
+  - name: Public - Auth
+    description: Endpoints de autenticación
+  - name: Admin - Users
+    description: Gestión de usuarios
 
 components:
   schemas:
@@ -151,7 +151,7 @@ paths:
   /ping:
     get:
       tags:
-        - system
+        - Public - Info
       summary: Ping al servidor
       responses:
         '200':
@@ -160,7 +160,7 @@ paths:
   /about:
     get:
       tags:
-        - system
+        - Public - Info
       summary: Información del desarrollador
       responses:
         '200':
@@ -177,7 +177,7 @@ paths:
   /auth/register:
     post:
       tags:
-        - auth
+        - Public - Auth
       summary: Registrar nuevo usuario
       requestBody:
         required: true
@@ -221,7 +221,7 @@ paths:
   /auth/login:
     post:
       tags:
-        - auth
+        - Public - Auth
       summary: Iniciar sesión
       requestBody:
         required: true
@@ -257,7 +257,7 @@ paths:
   /users:
     get:
       tags:
-        - users
+        - Admin - Users
       summary: Obtener todos los usuarios
       security:
         - bearerAuth: []
@@ -284,7 +284,7 @@ paths:
 
     post:
       tags:
-        - users
+        - Admin - Users
       summary: Crear nuevo usuario
       security:
         - bearerAuth: []
@@ -330,7 +330,7 @@ paths:
   /users/{id}:
     get:
       tags:
-        - users
+        - Admin - Users
       summary: Obtener usuario por ID
       parameters:
         - name: id
@@ -357,7 +357,7 @@ paths:
 
     put:
       tags:
-        - users
+        - Admin - Users
       summary: Actualizar usuario
       parameters:
         - name: id
@@ -399,7 +399,7 @@ paths:
 
     delete:
       tags:
-        - users
+        - Admin - Users
       summary: Eliminar usuario
       parameters:
         - name: id

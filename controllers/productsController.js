@@ -31,71 +31,24 @@ const productsController = {
   async getProductBySlug(req, res) {
     try {
       const { id, slug } = req.params;
-      let product = await productRepo.findById(id);
-      // debug logs removed
+      const product = await productRepo.findById(id);
 
-      // If not found by id (e.g., id is 'undefined'), try to find by slug
       if (!product) {
-        product = await productRepo.findBySlug(slug);
-        // debug logs removed
-        if (!product) {
-          // Fallback: try a LIKE search on slug (case-insensitive-like)
-          try {
-            const { Product } = require('../models/associations');
-            const { Op } = require('sequelize');
-            product = await Product.findOne({ where: { slug: { [Op.like]: `%${slug}%` } }, include: [{ association: 'category' }, { association: 'tags' }] });
-          } catch (e) {
-            // ignore
-          }
-        }
-
-        // If still not found, fetch a larger products list and try to match manually
-        if (!product) {
-          try {
-            const list = await productRepo.findAll({ page: 1, limit: 1000 });
-            if (list && list.rows) {
-              product = list.rows.find(p => p.slug && p.slug.indexOf(slug) !== -1);
-            }
-          } catch (e) {
-            // ignore
-          }
-        }
-
-        if (!product) {
-          return res.status(404).json({
-            status: 'error',
-            message: 'Product not found'
-          });
-        }
-
-        // We found by slug;
-        // If the slug in URL doesn't match the canonical slug, redirect (keep the id part as provided)
-        if (product.slug !== slug) {
-          return res.redirect(301, `/p/${id}-${product.slug}`);
-        }
-
-        // If id was not provided (e.g. 'undefined'), tests expect the id to be undefined
-        try {
-          const numericId = Number(id);
-          if (isNaN(numericId) || id === 'undefined') {
-            // clone result and set id to undefined for response to match test expectations
-            const result = product.toJSON ? product.toJSON() : Object.assign({}, product);
-            result.id = undefined;
-            return res.json({ status: 'success', data: result });
-          }
-        } catch (e) {
-          // ignore
-        }
-
-        return res.json({ status: 'success', data: product });
+        return res.status(404).json({
+          status: 'error',
+          message: 'Product not found'
+        });
       }
 
-      // Self-healing: if the slug doesn't match the product found by id, redirect
+      // Self-healing: Si el slug no coincide, redirigir al correcto
       if (product.slug !== slug) {
         return res.redirect(301, `/p/${id}-${product.slug}`);
       }
 
-      return res.json({ status: 'success', data: product });
+      res.json({
+        status: 'success',
+        data: product
+      });
     } catch (error) {
       res.status(500).json({
         status: 'error',
@@ -104,7 +57,7 @@ const productsController = {
     }
   },
 
-  // GET /products/:id - PROTEGIDO (Admin view)
+  // GET /products/:id - PROTEGIDO
   async getProductById(req, res) {
     try {
       const product = await productRepo.findById(req.params.id);
@@ -133,11 +86,9 @@ const productsController = {
     try {
       const productData = req.body;
       
-      // Generar slug automáticamente
-      productData.slug = await productRepo.generateSlug(
-        productData.name, 
-        productData.sku
-      );
+      // El slug se genera automáticamente en el modelo via hooks
+      // Remover slug si viene en el body para forzar generación automática
+      delete productData.slug;
 
       const product = await productRepo.create(productData);
       
@@ -165,14 +116,8 @@ const productsController = {
     try {
       const productData = req.body;
       
-      // Regenerar slug si el nombre cambió
-      const existingProduct = await productRepo.findById(req.params.id);
-      if (productData.name && productData.name !== existingProduct.name) {
-        productData.slug = await productRepo.generateSlug(
-          productData.name, 
-          productData.sku || existingProduct.sku
-        );
-      }
+      // Remover slug para forzar regeneración automática si name/sku cambian
+      delete productData.slug;
 
       const product = await productRepo.update(req.params.id, productData);
       
