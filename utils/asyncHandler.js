@@ -1,3 +1,6 @@
-module.exports = (fn) => (req, res, next) => {
+// utils/asyncHandler.js - NUEVO ARCHIVO si no existe
+const asyncHandler = (fn) => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
+
+module.exports = asyncHandler;

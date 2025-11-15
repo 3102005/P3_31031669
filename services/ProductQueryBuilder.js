@@ -1,4 +1,4 @@
-// src/services/ProductQueryBuilder.js
+// services/ProductQueryBuilder.js - NUEVO ARCHIVO (nueva carpeta)
 const { Op } = require('sequelize');
 const { Category, Tag } = require('../models');
 
@@ -6,39 +6,38 @@ class ProductQueryBuilder {
   constructor() {
     this.queryOptions = {
       where: {},
-      include: [],
-      limit: 10,
-      offset: 0
+      include: [
+        { model: Category, as: 'category' },
+        { model: Tag, as: 'tags', through: { attributes: [] } }
+      ]
     };
   }
 
   withPagination(page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
     this.queryOptions.limit = parseInt(limit);
-    this.queryOptions.offset = (page - 1) * limit;
+    this.queryOptions.offset = offset;
     return this;
   }
 
-  withCategory(categoryId) {
-    if (categoryId) {
-      this.queryOptions.include.push({
-        model: Category,
-        as: 'category',
-        where: { id: categoryId },
-        required: true
-      });
+  withCategory(category) {
+    if (category) {
+      this.queryOptions.include[0].where = {
+        [Op.or]: [
+          { id: category },
+          { name: { [Op.like]: `%${category}%` } }
+        ]
+      };
+      this.queryOptions.include[0].required = true;
     }
     return this;
   }
 
-  withTags(tagIds) {
-    if (tagIds && tagIds.length > 0) {
-      this.queryOptions.include.push({
-        model: Tag,
-        as: 'tags',
-        where: { id: { [Op.in]: tagIds } },
-        through: { attributes: [] },
-        required: true
-      });
+  withTags(tags) {
+    if (tags) {
+      const tagIds = tags.split(',').map(id => parseInt(id.trim()));
+      this.queryOptions.include[1].where = { id: { [Op.in]: tagIds } };
+      this.queryOptions.include[1].required = true;
     }
     return this;
   }
@@ -52,20 +51,12 @@ class ProductQueryBuilder {
     return this;
   }
 
-  withSearch(searchTerm) {
-    if (searchTerm) {
+  withSearch(search) {
+    if (search) {
       this.queryOptions.where[Op.or] = [
-        { name: { [Op.iLike]: `%${searchTerm}%` } },
-        { description: { [Op.iLike]: `%${searchTerm}%` } }
+        { name: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } }
       ];
-    }
-    return this;
-  }
-
-  // Filtros personalizados para Funko Pop Avengers
-  withCharacter(character) {
-    if (character) {
-      this.queryOptions.where.character = character;
     }
     return this;
   }
@@ -84,6 +75,21 @@ class ProductQueryBuilder {
     return this;
   }
 
+  // Filtros específicos para Funko Pop Avengers
+  withCharacter(character) {
+    if (character) {
+      this.queryOptions.where.character = { [Op.like]: `%${character}%` };
+    }
+    return this;
+  }
+
+  withUniverse(universe) {
+    if (universe) {
+      this.queryOptions.where.universe = { [Op.like]: `%${universe}%` };
+    }
+    return this;
+  }
+
   withExclusive(exclusive) {
     if (exclusive !== undefined) {
       this.queryOptions.where.exclusive = exclusive === 'true';
@@ -92,14 +98,6 @@ class ProductQueryBuilder {
   }
 
   build() {
-    // Asegurar que las inclusiones básicas estén presentes
-    if (!this.queryOptions.include.some(inc => inc.model === Category || inc === Category)) {
-      this.queryOptions.include.push({ model: Category, as: 'category' });
-    }
-    if (!this.queryOptions.include.some(inc => inc.model === Tag || inc === Tag)) {
-      this.queryOptions.include.push({ model: Tag, as: 'tags' });
-    }
-
     return this.queryOptions;
   }
 }

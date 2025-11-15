@@ -1,4 +1,4 @@
-// src/controllers/categoryController.js
+// controllers/categoryController.js - NUEVO ARCHIVO
 const { Category } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 

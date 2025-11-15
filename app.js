@@ -41,7 +41,7 @@ const indexRouter = require('./routes/index');
 const productsRouter = require('./routes/products');
 const categoriesRouter = require('./routes/categories');
 const tagsRouter = require('./routes/tags');
-const productsController = require('./controllers/productsController');
+const productsController = require('./controllers/productController');
 
 // Cargar swagger con manejo de errores y ruta absoluta
 let swaggerDocument;

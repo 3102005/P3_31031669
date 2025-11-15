@@ -1,4 +1,4 @@
-// src/repositories/ProductRepository.js
+// repositories/ProductRepository.js - NUEVO ARCHIVO (nueva carpeta)
 const { Product, Category, Tag } = require('../models');
 
 class ProductRepository {
@@ -6,64 +6,42 @@ class ProductRepository {
     this.model = Product;
   }
 
-  async findAllWithFilters(filters = {}) {
-    const { page = 1, limit = 10, ...whereConditions } = filters;
-    const offset = (page - 1) * limit;
-
-    return await this.model.findAndCountAll({
-      where: whereConditions,
-      include: [
-        { model: Category, as: 'category' },
-        { model: Tag, as: 'tags' }
-      ],
-      limit: parseInt(limit),
-      offset: offset,
-      distinct: true
-    });
+  async findAllWithFilters(queryOptions = {}) {
+    return await this.model.findAndCountAll(queryOptions);
   }
 
   async findById(id) {
     return await this.model.findByPk(id, {
       include: [
         { model: Category, as: 'category' },
-        { model: Tag, as: 'tags' }
-      ]
-    });
-  }
-
-  async findBySlug(slug) {
-    return await this.model.findOne({
-      where: { slug },
-      include: [
-        { model: Category, as: 'category' },
-        { model: Tag, as: 'tags' }
+        { model: Tag, as: 'tags', through: { attributes: [] } }
       ]
     });
   }
 
   async create(productData) {
-    // If tags are provided as array of tag IDs, create product then associate
-    const tags = productData.tags;
-    if (tags) delete productData.tags;
+    // Create product first, then associate tags if provided to avoid
+    // eager-loading alias issues.
+    const { tags, CategoryId, ...rest } = productData;
+    const product = await this.model.create({ ...rest, CategoryId });
 
-    const product = await this.model.create(productData);
     if (tags && Array.isArray(tags) && tags.length > 0) {
+      // tags might be array of ids
       await product.setTags(tags);
     }
-    return product;
+
+    return await this.findById(product.id);
   }
 
   async update(id, productData) {
     const product = await this.findById(id);
     if (!product) return null;
-    const tags = productData.tags;
-    if (tags) delete productData.tags;
-
-    const updated = await product.update(productData);
+    const { tags, CategoryId, ...rest } = productData;
+    await product.update({ ...rest, CategoryId });
     if (tags && Array.isArray(tags)) {
-      await updated.setTags(tags);
+      await product.setTags(tags);
     }
-    return updated;
+    return await this.findById(id);
   }
 
   async delete(id) {

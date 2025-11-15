@@ -36,5 +36,12 @@ Tag.belongsToMany(Product, {
   otherKey: 'ProductId',
   as: 'products'
 });
-
-module.exports = { sequelize, DataTypes, Category, Tag, Product, ProductTag };
+module.exports = {
+  sequelize,
+  Sequelize,
+  DataTypes,
+  Category,
+  Tag,
+  Product,
+  ProductTag
+};
