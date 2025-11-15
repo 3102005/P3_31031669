@@ -1,32 +1,157 @@
-# swagger.yaml
+---
 openapi: 3.0.0
 info:
-  title: API DE 31031669 - Tarea 1
+  title: API DE 31031669 - Tarea 2
   description: |
     API RESTful con autenticación JWT y gestión de usuarios
   version: 1.0.0
 
 servers:
-  - url: http://localhost:3000
-    description: Servidor local
+  - url: http://localhost:{port}
+    description: Servidor local (usa el puerto de la aplicación)
+    variables:
+      port:
+        default: "3002"
+        description: Puerto donde corre la app en desarrollo
   - url: https://p3-31031669-2.onrender.com
     description: Servidor de producción
 
 tags:
-  - name: auth
-    description:
-  - name: users
-    description:
-  - name: system
-    description:
+  - name: Public - Products
+    description: Endpoints públicos para consulta de productos
+  - name: Admin - Products  
+    description: Gestión de productos (requiere autenticación)
+  - name: Admin - Categories
+    description: Gestión de categorías (requiere autenticación)
+  - name: Admin - Tags
+    description: Gestión de etiquetas (requiere autenticación)
+  - name: Public - Info
+    description: Información pública del sistema
+  - name: Public - Auth
+    description: Endpoints de autenticación
+  - name: Admin - Users
+    description: Gestión de usuarios
+
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Iron Man Mark LXXXV"
+        description:
+          type: string
+          example: "Funko Pop de Iron Man con traje de Endgame"
+        price:
+          type: number
+          format: float
+          example: 29.99
+        stock:
+          type: integer
+          example: 50
+        sku:
+          type: string
+          example: "AVG001"
+        brand:
+          type: string
+          example: "Funko"
+        publisher:
+          type: string
+          example: "Marvel"
+        movie:
+          type: string
+          example: "Avengers: Endgame"
+        character:
+          type: string
+          example: "Iron Man"
+        edition:
+          type: string
+          example: "Standard"
+        releaseYear:
+          type: integer
+          example: 2024
+        isExclusive:
+          type: boolean
+          example: false
+        slug:
+          type: string
+          example: "iron-man-mark-lxxxv-avg001"
+        CategoryId:
+          type: integer
+          example: 1
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Avengers"
+        description:
+          type: string
+          example: "Avengers movie collection"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "limited-edition"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "error"
+        message:
+          type: string
+          example: "Error description"
+    Success:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        data:
+          type: object
+        message:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 
 paths:
-  
-
   /ping:
     get:
       tags:
-        - system
+        - Public - Info
       summary: Ping al servidor
       responses:
         '200':
@@ -35,7 +160,7 @@ paths:
   /about:
     get:
       tags:
-        - system
+        - Public - Info
       summary: Información del desarrollador
       responses:
         '200':
@@ -52,7 +177,7 @@ paths:
   /auth/register:
     post:
       tags:
-        - auth
+        - Public - Auth
       summary: Registrar nuevo usuario
       requestBody:
         required: true
@@ -96,7 +221,7 @@ paths:
   /auth/login:
     post:
       tags:
-        - auth
+        - Public - Auth
       summary: Iniciar sesión
       requestBody:
         required: true
@@ -132,7 +257,7 @@ paths:
   /users:
     get:
       tags:
-        - users
+        - Admin - Users
       summary: Obtener todos los usuarios
       security:
         - bearerAuth: []
@@ -159,7 +284,7 @@ paths:
 
     post:
       tags:
-        - users
+        - Admin - Users
       summary: Crear nuevo usuario
       security:
         - bearerAuth: []
@@ -205,7 +330,7 @@ paths:
   /users/{id}:
     get:
       tags:
-        - users
+        - Admin - Users
       summary: Obtener usuario por ID
       parameters:
         - name: id
@@ -232,7 +357,7 @@ paths:
 
     put:
       tags:
-        - users
+        - Admin - Users
       summary: Actualizar usuario
       parameters:
         - name: id
@@ -274,7 +399,7 @@ paths:
 
     delete:
       tags:
-        - users
+        - Admin - Users
       summary: Eliminar usuario
       parameters:
         - name: id
@@ -294,9 +419,467 @@ paths:
                 data: null
                 message: "User deleted successfully"
 
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+  /categories:
+    get:
+      tags:
+        - Admin - Categories
+      summary: Obtener todas las categorías
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de categorías
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Category'
+        '401':
+          description: No autorizado
+  /categories/{id}:
+    get:
+      tags:
+        - Admin - Categories
+      summary: Obtener categoría por ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Categoría encontrada
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+        '404':
+          description: Categoría no encontrada
+    put:
+      tags:
+        - Admin - Categories
+      summary: Actualizar categoría
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Categoría actualizada
+        '404':
+          description: Categoría no encontrada
+    delete:
+      tags:
+        - Admin - Categories
+      summary: Eliminar categoría
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Categoría eliminada
+        '404':
+          description: Categoría no encontrada
+
+  /tags:
+    get:
+      tags:
+        - Admin - Tags
+      summary: Obtener todas las etiquetas
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de etiquetas
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Tag'
+    post:
+      tags:
+        - Admin - Tags
+      summary: Crear una nueva etiqueta
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Etiqueta creada
+        '400':
+          description: Datos inválidos
+
+  /tags/{id}:
+    get:
+      tags:
+        - Admin - Tags
+      summary: Obtener etiqueta por ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Etiqueta encontrada
+        '404':
+          description: Etiqueta no encontrada
+    put:
+      tags:
+        - Admin - Tags
+      summary: Actualizar etiqueta
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Etiqueta actualizada
+        '404':
+          description: Etiqueta no encontrada
+    delete:
+      tags:
+        - Admin - Tags
+      summary: Eliminar etiqueta
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Etiqueta eliminada
+        '404':
+          description: Etiqueta no encontrada
+
+  /products:
+    get:
+      tags:
+        - Public - Products
+      summary: Búsqueda avanzada de productos con filtros
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: category
+          in: query
+          schema:
+            type: integer
+        - name: tags
+          in: query
+          schema:
+            type: string
+            description: IDs separados por coma
+        - name: price_min
+          in: query
+          schema:
+            type: number
+        - name: price_max
+          in: query
+          schema:
+            type: number
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: movie
+          in: query
+          schema:
+            type: string
+        - name: character
+          in: query
+          schema:
+            type: string
+        - name: edition
+          in: query
+          schema:
+            type: string
+        - name: isExclusive
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Lista de productos paginada
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          products:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Product'
+                          pagination:
+                            type: object
+                            properties:
+                              page:
+                                type: integer
+                              limit:
+                                type: integer
+                              total:
+                                type: integer
+                              pages:
+                                type: integer
+    post:
+      tags:
+        - Admin - Products
+      summary: Crear nuevo producto
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - price
+                - sku
+                - movie
+                - character
+                - CategoryId
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                stock:
+                  type: integer
+                sku:
+                  type: string
+                brand:
+                  type: string
+                publisher:
+                  type: string
+                movie:
+                  type: string
+                character:
+                  type: string
+                edition:
+                  type: string
+                releaseYear:
+                  type: integer
+                isExclusive:
+                  type: boolean
+                CategoryId:
+                  type: integer
+                tags:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '201':
+          description: Producto creado
+        '400':
+          description: Datos inválidos
+
+  /products/{id}:
+    get:
+      tags:
+        - Admin - Products
+      summary: Obtener producto por ID (vista admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Producto encontrado
+        '404':
+          description: Producto no encontrada
+    put:
+      tags:
+        - Admin - Products
+      summary: Actualizar producto
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                stock:
+                  type: integer
+                sku:
+                  type: string
+                brand:
+                  type: string
+                publisher:
+                  type: string
+                movie:
+                  type: string
+                character:
+                  type: string
+                edition:
+                  type: string
+                releaseYear:
+                  type: integer
+                isExclusive:
+                  type: boolean
+                CategoryId:
+                  type: integer
+                tags:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: Producto actualizado
+        '404':
+          description: Producto no encontrada
+    delete:
+      tags:
+        - Admin - Products
+      summary: Eliminar producto
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Producto eliminado
+        '404':
+          description: Producto no encontrada
+
+  /p/{id}-{slug}:
+    get:
+      tags:
+        - Public - Products
+      summary: Obtener producto por ID y slug (URL self-healing)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Producto encontrado
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Product'
+        '301':
+          description: Redirección a URL correcta (self-healing)
+        '404':
+          description: Producto no encontrado
