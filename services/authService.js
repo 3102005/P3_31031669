@@ -5,7 +5,7 @@ class AuthService {
   generateToken(userId) {
     return jwt.sign(
       { userId }, 
-      process.env.JWT_SECRET || 'fallback_secret_para_desarrollo',
+      process.env.JWT_SECRET || 'avengers-funko-secret-key',
       { expiresIn: '24h' }
     );
   }
