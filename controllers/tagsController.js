@@ -1,4 +1,4 @@
-const { Tag } = require('../models/associations');
+const { Tag } = require('../models');
 
 const tagsController = {
   // GET /tags - PROTEGIDO

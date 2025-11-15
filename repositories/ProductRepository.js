@@ -1,65 +1,69 @@
-const { Product, Category, Tag } = require('../models/associations');
-const { Op } = require('sequelize');
-const ProductQueryBuilder = require('../services/QueryBuilder');
+// src/repositories/ProductRepository.js
+const { Product, Category, Tag } = require('../models');
 
 class ProductRepository {
-  async findAll(filters = {}) {
-    const {
-      page = 1,
-      limit = 10,
-      category,
-      tags,
-      price_min,
-      price_max,
-      search,
-      movie,
-      character,
-      edition
-    } = filters;
+  constructor() {
+    this.model = Product;
+  }
 
-    const queryBuilder = new ProductQueryBuilder()
-      .paginate(page, limit)
-      .filterByCategory(category)
-      .filterByTags(tags)
-      .filterByPrice(price_min, price_max)
-      .search(search)
-      .filterByMovie(movie)
-      .filterByCharacter(character)
-      .filterByEdition(edition);
+  async findAllWithFilters(filters = {}) {
+    const { page = 1, limit = 10, ...whereConditions } = filters;
+    const offset = (page - 1) * limit;
 
-    const query = queryBuilder.build();
-    
-    return await Product.findAndCountAll(query);
+    return await this.model.findAndCountAll({
+      where: whereConditions,
+      include: [
+        { model: Category, as: 'category' },
+        { model: Tag, as: 'tags' }
+      ],
+      limit: parseInt(limit),
+      offset: offset,
+      distinct: true
+    });
   }
 
   async findById(id) {
-    return await Product.findByPk(id, {
+    return await this.model.findByPk(id, {
       include: [
         { model: Category, as: 'category' },
-        { model: Tag, as: 'tags', through: { attributes: [] } }
+        { model: Tag, as: 'tags' }
       ]
     });
   }
 
   async findBySlug(slug) {
-    return await Product.findOne({
+    return await this.model.findOne({
       where: { slug },
       include: [
         { model: Category, as: 'category' },
-        { model: Tag, as: 'tags', through: { attributes: [] } }
+        { model: Tag, as: 'tags' }
       ]
     });
   }
 
   async create(productData) {
-    return await Product.create(productData);
+    // If tags are provided as array of tag IDs, create product then associate
+    const tags = productData.tags;
+    if (tags) delete productData.tags;
+
+    const product = await this.model.create(productData);
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      await product.setTags(tags);
+    }
+    return product;
   }
 
   async update(id, productData) {
     const product = await this.findById(id);
     if (!product) return null;
-    
-    return await product.update(productData);
+    const tags = productData.tags;
+    if (tags) delete productData.tags;
+
+    const updated = await product.update(productData);
+    if (tags && Array.isArray(tags)) {
+      await updated.setTags(tags);
+    }
+    return updated;
   }
 
   async delete(id) {
@@ -67,30 +71,7 @@ class ProductRepository {
     if (!product) return null;
     
     await product.destroy();
-    return product;
-  }
-
-  async generateSlug(name, sku, existingId = null) {
-    const baseSlug = `${name.toLowerCase()
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')}-${sku.toLowerCase()}`;
-    
-    let slug = baseSlug;
-    let counter = 1;
-
-    while (true) {
-      const where = { slug };
-      if (existingId) where.id = { [Op.ne]: existingId };
-
-      const existing = await Product.findOne({ where });
-
-      if (!existing) break;
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
-
-    return slug;
+    return true;
   }
 }
 

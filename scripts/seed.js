@@ -1,5 +1,5 @@
 const { sequelize } = require('../models/index');
-const { Category, Tag, Product } = require('../models/associations');
+const { Category, Tag, Product } = require('../models');
 
 const seedDatabase = async () => {
   try {
