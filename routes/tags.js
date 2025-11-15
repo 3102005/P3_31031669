@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const tagsController = require('../controllers/tagsController');
+const tagsController = require('../controllers/tagController');
 const { authenticateToken } = require('../middleware/auth');
 
 // Todas las rutas protegidas

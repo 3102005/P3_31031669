@@ -1,49 +1,17 @@
-const { Product, Category, Tag } = require('../models/associations');
-const { Op } = require('sequelize');
-const ProductQueryBuilder = require('../services/QueryBuilder');
+// repositories/ProductRepository.js - NUEVO ARCHIVO (nueva carpeta)
+const { Product, Category, Tag } = require('../models');
 
 class ProductRepository {
-  async findAll(filters = {}) {
-    const {
-      page = 1,
-      limit = 10,
-      category,
-      tags,
-      price_min,
-      price_max,
-      search,
-      movie,
-      character,
-      edition
-    } = filters;
+  constructor() {
+    this.model = Product;
+  }
 
-    const queryBuilder = new ProductQueryBuilder()
-      .paginate(page, limit)
-      .filterByCategory(category)
-      .filterByTags(tags)
-      .filterByPrice(price_min, price_max)
-      .search(search)
-      .filterByMovie(movie)
-      .filterByCharacter(character)
-      .filterByEdition(edition);
-
-    const query = queryBuilder.build();
-    
-    return await Product.findAndCountAll(query);
+  async findAllWithFilters(queryOptions = {}) {
+    return await this.model.findAndCountAll(queryOptions);
   }
 
   async findById(id) {
-    return await Product.findByPk(id, {
-      include: [
-        { model: Category, as: 'category' },
-        { model: Tag, as: 'tags', through: { attributes: [] } }
-      ]
-    });
-  }
-
-  async findBySlug(slug) {
-    return await Product.findOne({
-      where: { slug },
+    return await this.model.findByPk(id, {
       include: [
         { model: Category, as: 'category' },
         { model: Tag, as: 'tags', through: { attributes: [] } }
@@ -52,14 +20,28 @@ class ProductRepository {
   }
 
   async create(productData) {
-    return await Product.create(productData);
+    // Create product first, then associate tags if provided to avoid
+    // eager-loading alias issues.
+    const { tags, CategoryId, ...rest } = productData;
+    const product = await this.model.create({ ...rest, CategoryId });
+
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      // tags might be array of ids
+      await product.setTags(tags);
+    }
+
+    return await this.findById(product.id);
   }
 
   async update(id, productData) {
     const product = await this.findById(id);
     if (!product) return null;
-    
-    return await product.update(productData);
+    const { tags, CategoryId, ...rest } = productData;
+    await product.update({ ...rest, CategoryId });
+    if (tags && Array.isArray(tags)) {
+      await product.setTags(tags);
+    }
+    return await this.findById(id);
   }
 
   async delete(id) {
@@ -67,30 +49,7 @@ class ProductRepository {
     if (!product) return null;
     
     await product.destroy();
-    return product;
-  }
-
-  async generateSlug(name, sku, existingId = null) {
-    const baseSlug = `${name.toLowerCase()
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')}-${sku.toLowerCase()}`;
-    
-    let slug = baseSlug;
-    let counter = 1;
-
-    while (true) {
-      const where = { slug };
-      if (existingId) where.id = { [Op.ne]: existingId };
-
-      const existing = await Product.findOne({ where });
-
-      if (!existing) break;
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
-
-    return slug;
+    return true;
   }
 }
 

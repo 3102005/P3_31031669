@@ -1,6 +1,22 @@
 const request = require('supertest');
-const app = require('../app');
-const { sequelize } = require('../models/index');
+const app = require('../src/app');
+const { Product, Category, Tag } = require('../src/models');
+
+describe('Product Self-Healing URLs', () => {
+  it('should redirect to correct slug when slug is incorrect', async () => {
+    const product = await Product.create({
+      name: 'Iron Man Mark L Funko Pop',
+      price: 34.99,
+      slug: 'iron-man-mark-l-funko-pop'
+    });
+
+    await request(app)
+      .get(`/products/p/${product.id}-wrong-slug`)
+      .expect(301)
+      .expect('Location', `/products/p/${product.id}-iron-man-mark-l-funko-pop`);
+  });
+});
+
 
 describe('Products API', () => {
   let token;

@@ -32,4 +32,4 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-module.exports = { authenticateToken, JWT_SECRET };
+module.exports = { authenticateToken, authenticate: authenticateToken, JWT_SECRET };

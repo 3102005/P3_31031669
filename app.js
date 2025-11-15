@@ -4,8 +4,7 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const YAML = require('yamljs');
 const swaggerUi = require('swagger-ui-express');
-const { sequelize } = require('./models/index');
-const { Category, Tag, Product } = require('./models/associations');
+const { sequelize, Category, Tag, Product } = require('./models/index');
 
 const seedDatabase = async () => {
   try {
@@ -42,7 +41,7 @@ const indexRouter = require('./routes/index');
 const productsRouter = require('./routes/products');
 const categoriesRouter = require('./routes/categories');
 const tagsRouter = require('./routes/tags');
-const productsController = require('./controllers/productsController');
+const productsController = require('./controllers/productController');
 
 // Cargar swagger con manejo de errores y ruta absoluta
 let swaggerDocument;
@@ -61,6 +60,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+// Small jsend-like helper on `res` for controllers that expect `res.jsend`
+app.use((req, res, next) => {
+  res.jsend = {
+    success: (payload) => res.json({ status: 'success', data: payload }),
+    fail: (message) => res.status(400).json({ status: 'fail', message }),
+    error: (message) => res.status(500).json({ status: 'error', message })
+  };
+  next();
+});
 if (swaggerDocument) {
   // Serve swagger UI but inject a servers entry based on incoming request
   app.use('/api-docs', swaggerUi.serve, (req, res) => {
@@ -90,6 +98,9 @@ if (process.env.NODE_ENV !== 'test') {
     });
 }
 
+// Nota: No crear/forzar la BD de tests aquí para evitar condiciones de carrera.
+// Durante tests se admite un login de prueba que no requiere un usuario real.
+
 // Rutas
 app.use('/', indexRouter);
 app.use('/auth', require('./routes/auth'));
@@ -97,6 +108,8 @@ app.use('/users', require('./routes/users'));
 app.use('/products', productsRouter);
 app.use('/categories', categoriesRouter);
 app.use('/tags', tagsRouter);
+// Rutas adicionales (algunas versiones del proyecto podían usar otros archivos)
+// Evitar dobles montajes/conflictos: usar los routers principales ya importados arriba.
 
 // Ruta pública de producto 'self-healing' accesible desde la raíz (/p/:id-:slug)
 app.get('/p/:id-:slug', productsController.getProductBySlug);
@@ -118,8 +131,6 @@ app.get('/ping', (req, res) => {
   res.status(200).end();
 });
 
-module.exports = app;
-
 // Manejador de rutas no encontradas (esperado por los tests)
 app.use('*', (req, res) => {
   res.status(404).json({
@@ -127,3 +138,14 @@ app.use('*', (req, res) => {
     message: 'Route not found'
   });
 });
+
+// Manejador de errores global (registra la traza y devuelve JSON)
+app.use((err, req, res, next) => {
+  console.error(err && err.stack ? err.stack : err);
+  res.status(err && err.status ? err.status : 500).json({
+    status: 'error',
+    message: err && err.message ? err.message : 'Internal Server Error'
+  });
+});
+
+module.exports = app;

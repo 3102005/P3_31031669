@@ -1,4 +1,4 @@
-const { Category } = require('../models/associations');
+const { Category } = require('../models');
 
 const categoriesController = {
   // GET /categories - PROTEGIDO
