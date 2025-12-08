@@ -46,14 +46,14 @@ const getUserById = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const { nombreCompleto, email, password, cedula, seccion } = req.body;
+       const { nombreCompleto, email, password, cedula, seccion } = req.body;
 
-    if (!nombreCompleto || !email || !password || !cedula || !seccion) {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'nombreCompleto, email, password, cedula y seccion son obligatorios'
-      });
-    }
+      if (!nombreCompleto || !email || !password || !cedula) {
+        return res.status(400).json({
+          status: 'fail',
+          message: 'nombreCompleto, email, password y cedula son obligatorios'
+        });
+      }
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
@@ -62,7 +62,9 @@ const createUser = async (req, res) => {
         message: 'User already exists with this email'
       });
     }
-    const user = await User.create({ nombreCompleto, email, password, cedula, seccion });
+    const payload = { nombreCompleto, email, password, cedula };
+    if (seccion) payload.seccion = seccion;
+    const user = await User.create(payload);
 
     res.status(201).json({
       status: 'success',
@@ -103,7 +105,9 @@ const updateUser = async (req, res) => {
       }
     }
 
-  await user.update({ nombreCompleto, email, cedula, seccion });
+  const updatePayload = { nombreCompleto, email, cedula };
+  if (seccion !== undefined) updatePayload.seccion = seccion;
+  await user.update(updatePayload);
 
     res.status(200).json({
       status: 'success',

@@ -60,6 +60,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+// CORS: permitir peticiones desde el navegador (configuración simple)
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE');
+    return res.status(200).end();
+  }
+  next();
+});
 // Small jsend-like helper on `res` for controllers that expect `res.jsend`
 app.use((req, res, next) => {
   res.jsend = {
@@ -108,8 +118,7 @@ app.use('/users', require('./routes/users'));
 app.use('/products', productsRouter);
 app.use('/categories', categoriesRouter);
 app.use('/tags', tagsRouter);
-// Rutas adicionales (algunas versiones del proyecto podían usar otros archivos)
-// Evitar dobles montajes/conflictos: usar los routers principales ya importados arriba.
+// Evitar montajes duplicados: los routers principales ya están importados arriba.
 
 // Ruta pública de producto 'self-healing' accesible desde la raíz (/p/:id-:slug)
 app.get('/p/:id-:slug', productsController.getProductBySlug);

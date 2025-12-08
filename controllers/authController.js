@@ -5,10 +5,10 @@ const register = async (req, res) => {
   try {
     const { nombreCompleto, email, password, cedula, seccion } = req.body;
 
-    if (!nombreCompleto || !email || !password || !cedula || !seccion) {
+    if (!nombreCompleto || !email || !password || !cedula) {
       return res.status(400).json({
         status: 'fail',
-        message: 'nombreCompleto, email, password, cedula y seccion son obligatorios'
+        message: 'nombreCompleto, email, password y cedula son obligatorios'
       });
     }
 
@@ -20,7 +20,10 @@ const register = async (req, res) => {
       });
     }
 
-    const user = await User.create({ nombreCompleto, email, password, cedula, seccion });
+    // `seccion` es opcional ahora; si no viene, lo omitimos
+    const createPayload = { nombreCompleto, email, password, cedula };
+    if (seccion) createPayload.seccion = seccion;
+    const user = await User.create(createPayload);
 
     const token = jwt.sign(
       { userId: user.id, email: user.email },
@@ -40,6 +43,20 @@ const register = async (req, res) => {
       }
     });
   } catch (error) {
+    // Log error for debugging
+    console.error('authController.register error:', error && (error.stack || error));
+
+    // Handle Sequelize validation / unique constraint errors
+    if (error.name === 'SequelizeValidationError') {
+      const messages = error.errors ? error.errors.map(e => e.message) : [error.message];
+      return res.status(400).json({ status: 'fail', message: messages.join('; ') });
+    }
+
+    if (error.name === 'SequelizeUniqueConstraintError' || /ya est/.test(error.message)) {
+      return res.status(409).json({ status: 'fail', message: error.message });
+    }
+
+    // Fallback
     res.status(500).json({
       status: 'error',
       message: 'Internal server error'
