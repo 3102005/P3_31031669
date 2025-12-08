@@ -186,12 +186,12 @@ paths:
             schema:
               type: object
               required:
-                - fullName
+                - nombreCompleto
                 - email
                 - password
                 - cedula
               properties:
-                fullName:
+                nombreCompleto:
                   type: string
                   example: "Adriana Padron"
                 email:
@@ -883,3 +883,197 @@ paths:
           description: Redirección a URL correcta (self-healing)
         '404':
           description: Producto no encontrado
+
+          # Añadir a tu swagger.yaml existente
+
+components:
+  schemas:
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+        stock:
+          type: integer
+        character:
+          type: string
+        movie:
+          type: string
+        edition:
+          type: string
+        number:
+          type: integer
+        exclusive:
+          type: boolean
+        slug:
+          type: string
+        CategoryId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        Tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+
+paths:
+  /categories:
+    get:
+      tags:
+        - Admin - Categories
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+
+  /products:
+    get:
+      tags:
+        - Public - Products
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: category
+          schema:
+            type: integer
+        - in: query
+          name: tags
+          schema:
+            type: string
+        - in: query
+          name: price_min
+          schema:
+            type: number
+        - in: query
+          name: price_max
+          schema:
+            type: number
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: character
+          schema:
+            type: string
+        - in: query
+          name: movie
+          schema:
+            type: string
+        - in: query
+          name: edition
+          schema:
+            type: string
+        - in: query
+          name: exclusive
+          schema:
+            type: boolean
+      responses:
+        200:
+          description: Filtered products with pagination
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      products:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Product'
+                      pagination:
+                        type: object
+                        properties:
+                          page:
+                            type: integer
+                          limit:
+                            type: integer
+                          total:
+                            type: integer
+                          pages:
+                            type: integer
+
+  /p/{id}-{slug}:
+    get:
+      tags:
+        - Public - Products
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Product details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    $ref: '#/components/schemas/Product'
+        301:
+          description: Redirect to correct slug

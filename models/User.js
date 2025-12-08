@@ -42,10 +42,7 @@ const User = sequelize.define('User', {
   },
   seccion: {
     type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      notEmpty: true
-    }
+    allowNull: true
   }
 }, {
   hooks: {

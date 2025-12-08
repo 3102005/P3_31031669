@@ -26,7 +26,6 @@ exports.getProducts = async (req, res) => {
 
     // Usar Builder Pattern para construir consulta
     const queryBuilder = new ProductQueryBuilder()
-      .withPagination(page, limit)
       .withCategory(category)
       .withTags(tags)
       .withPriceRange(price_min, price_max)
@@ -37,20 +36,44 @@ exports.getProducts = async (req, res) => {
       .withUniverse(universe)
       .withExclusive(exclusive);
 
+    // Aplicar paginación sólo si el cliente la solicitó explícitamente
+    // o si envió cualquier filtro. Si no hay filtros ni parámetros de
+    // paginación, devolvemos TODOS los productos (sin limit).
+    const hasFilters = Boolean(
+      category || tags || price_min || price_max || search || movie || character || edition || universe || (typeof exclusive !== 'undefined')
+    );
+
+    if (hasFilters || req.query.page || req.query.limit) {
+      queryBuilder.withPagination(page, limit);
+    }
+
     // Usar Repository Pattern para acceso a datos
     const { rows: products, count } = await productRepo.findAllWithFilters(
       queryBuilder.build()
     );
 
-    res.jsend.success({
-      products,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total: count,
-        pages: Math.ceil(count / limit)
-      }
-    });
+    // Si no se aplicó paginación, devolver metadata acorde (todos los productos)
+    if (!queryBuilder.queryOptions || !queryBuilder.build().limit) {
+      res.jsend.success({
+        products,
+        pagination: {
+          page: 1,
+          limit: products.length,
+          total: count,
+          pages: 1
+        }
+      });
+    } else {
+      res.jsend.success({
+        products,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: count,
+          pages: Math.ceil(count / limit)
+        }
+      });
+    }
   } catch (error) {
     console.error(error && error.stack ? error.stack : error);
     res.status(500).jsend.error(error.message);
