@@ -7,14 +7,10 @@ info:
   version: 1.0.0
 
 servers:
-  - url: http://localhost:{port}
-    description: Servidor local (usa el puerto de la aplicación)
-    variables:
-      port:
-        default: "3002"
-        description: Puerto donde corre la app en desarrollo
-  - url: https://p3-31031669-2.onrender.com
-    description: Servidor de producción
+  servers:
+  - url: http://localhost:3000
+    description: Servidor de desarrollo
+
 
 tags:
   - name: Public - Products
