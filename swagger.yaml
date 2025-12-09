@@ -11,7 +11,7 @@ servers:
     description: Servidor local (usa el puerto de la aplicación)
     variables:
       port:
-        default: "3002"
+        default: "3000"
         description: Puerto donde corre la app en desarrollo
   - url: https://p3-31031669-2.onrender.com
     description: Servidor de producción
