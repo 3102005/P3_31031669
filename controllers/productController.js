@@ -48,9 +48,9 @@ exports.getProducts = async (req, res) => {
     }
 
     // Usar Repository Pattern para acceso a datos
-    const { rows: products, count } = await productRepo.findAllWithFilters(
-      queryBuilder.build()
-    );
+    const queryOptions = queryBuilder.build();
+    console.log('DEBUG product queryOptions:', JSON.stringify(queryOptions));
+    const { rows: products, count } = await productRepo.findAllWithFilters(queryOptions);
 
     // Si no se aplicó paginación, devolver metadata acorde (todos los productos)
     if (!queryBuilder.queryOptions || !queryBuilder.build().limit) {
