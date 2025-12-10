@@ -54,6 +54,10 @@ try {
 }
 const app = express();
 
+// Si la app corre detrás de un proxy (Render, Heroku, etc.), activar trust proxy
+// para que `req.protocol` refleje correctamente `X-Forwarded-Proto` (https).
+app.set('trust proxy', true);
+
 // Middlewares
 app.use(logger('dev'));
 app.use(express.json());
