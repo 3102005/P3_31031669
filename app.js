@@ -60,16 +60,33 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-// CORS: permitir peticiones desde el navegador (configuración simple)
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  if (req.method === 'OPTIONS') {
-    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE');
-    return res.status(200).end();
-  }
-  next();
-});
+// CORS: usar paquete `cors` y permitir configuración vía variables de entorno
+// En producción (Render) defina `CORS_ORIGIN` como el origen del frontend
+// (por ejemplo: https://misitio-frontend.com) o una lista separada por comas.
+// Si necesita cookies/credenciales, ponga `CORS_ALLOW_CREDENTIALS=true` y
+// establezca `CORS_ORIGIN` explícitamente (no use '*').
+const cors = require('cors');
+
+const corsOriginEnv = process.env.CORS_ORIGIN || null; // e.g. 'https://mi-frontend.com'
+const allowedOrigins = corsOriginEnv ? corsOriginEnv.split(',').map(s => s.trim()) : null;
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // allow requests with no origin (like curl, postman, server-to-server)
+    if (!origin) return callback(null, true);
+    // if no allowedOrigins configured, allow any origin
+    if (!allowedOrigins) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  credentials: process.env.CORS_ALLOW_CREDENTIALS === 'true'
+};
+
+app.use(cors(corsOptions));
 // Small jsend-like helper on `res` for controllers that expect `res.jsend`
 app.use((req, res, next) => {
   res.jsend = {
