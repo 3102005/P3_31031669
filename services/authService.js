@@ -3,8 +3,9 @@ const { User } = require('../models');
 
 class AuthService {
   generateToken(userId) {
+    // Include both `id` and `userId` for compatibility with different consumers
     return jwt.sign(
-      { userId }, 
+      { id: userId, userId }, 
       process.env.JWT_SECRET || 'avengers-funko-secret-key',
       { expiresIn: '24h' }
     );

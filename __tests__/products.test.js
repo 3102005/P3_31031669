@@ -1,6 +1,14 @@
 const request = require('supertest');
 const app = require('../src/app');
-const { Product, Category, Tag } = require('../src/models');
+const { Product, Category, Tag, sequelize } = require('../src/models');
+
+// Ensure DB is clean before tests run in this file. This prevents collisions
+// with seeded data or prior tests that would make inserts fail (e.g. unique
+// slug constraints). The `Products API` tests also call sync; running once at
+// the top prevents intermittent failures.
+beforeAll(async () => {
+  await sequelize.sync({ force: true });
+});
 
 describe('Product Self-Healing URLs', () => {
   it('should redirect to correct slug when slug is incorrect', async () => {
@@ -24,12 +32,36 @@ describe('Products API', () => {
   let tagId;
   let productId;
 
-  beforeAll(async () => {
-    // Sincronizar base de datos de prueba
-    await sequelize.sync({ force: true });
+    beforeAll(async () => {
+      // Sincronizar base de datos de prueba
+      await sequelize.sync({ force: true });
     
-    // Crear token JWT de prueba (simulado)
-    token = 'test-jwt-token';
+      // Crear token de prueba y algunos productos
+      token = 'test-jwt-token';
+      userId = 1; // Used in Order tests
+
+      // Crear Category y Tag usando modelos directos para evitar dependencia de rutas protegidas en este setup
+      const category = await Category.create({ name: 'Test Category', description: 'Desc' });
+      categoryId = category.id;
+      const tag = await Tag.create({ name: 'limited-edition' });
+      tagId = tag.id;
+
+      // Crear productos de prueba
+      testProduct1 = await Product.create({
+        name: 'Product 1',
+        slug: 'product-1',
+        price: 100.00,
+        stock: 10,
+        CategoryId: categoryId
+      });
+    
+      testProduct2 = await Product.create({
+        name: 'Product 2',
+        slug: 'product-2',
+        price: 50.00,
+        stock: 5,
+        CategoryId: categoryId
+      });
   });
 
   describe('POST /categories (Protected)', () => {

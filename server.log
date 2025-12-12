@@ -1,0 +1,18 @@
+DEBUG ENV at app startup: development
+Database synchronized successfully
+Starting server (listen called) on port 3001
+Server is listening on port 3001
+✅ Database synchronized
+✅ Database seeded successfully
+[0mPOST /auth/login [32m200 [0m319.649 ms - 298[0m
+DEBUG auth header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcklkIjoyLCJlbWFpbCI6ImNsaXVzZXJAdGVzdC5jb20iLCJpYXQiOjE3NjU1NzAyNzQsImV4cCI6MTc2NTY1NjY3NH0.xdj5cv1WrP55sdiuR5ZtqUQYAPze7CQlGTuC2Le27NU
+DEBUG token extracted: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcklkIjoyLCJlbWFpbCI6ImNsaXVzZXJAdGVzdC5jb20iLCJpYXQiOjE3NjU1NzAyNzQsImV4cCI6MTc2NTY1NjY3NH0.xdj5cv1WrP55sdiuR5ZtqUQYAPze7CQlGTuC2Le27NU
+DEBUG before jwt.verify, using secret (len): 25
+DEBUG jwt payload: {
+  id: 2,
+  userId: 2,
+  email: 'cliuser@test.com',
+  iat: 1765570274,
+  exp: 1765656674
+}
+[0mPOST /api/orders [32m201 [0m43.362 ms - 422[0m
