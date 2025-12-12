@@ -13,9 +13,10 @@ const authenticateToken = (req, res, next) => {
     });
   }
 
-  // During tests, allow a simple test token to bypass JWT verification
-  if (process.env.NODE_ENV === 'test' && token === 'test-jwt-token') {
-    req.user = { id: 'test-user', test: true };
+  // During tests or when PAYMENT_SIMULATE is enabled, allow a simple test token to bypass JWT verification.
+  // Use a numeric `id` to avoid foreign key constraint issues when creating orders.
+  if ((process.env.NODE_ENV === 'test' || process.env.PAYMENT_SIMULATE === 'true') && token === 'test-jwt-token') {
+    req.user = { id: 1, email: 'test@local', test: true };
     return next();
   }
 

@@ -1,16 +1,14 @@
 const { Sequelize, DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: './database.sqlite',
-  logging: false
-});
-
-// Inicializar modelos desde sus fábricas
+// Inicializar modelos desde sus fábricas (algunos modelos exportan fábricas)
 const Category = require('./Category')(sequelize, DataTypes);
 const Tag = require('./Tag')(sequelize, DataTypes);
 const ProductTag = require('./ProductTag')(sequelize, DataTypes);
 const Product = require('./Product')(sequelize, DataTypes);
+const User = require('./User')(sequelize, DataTypes);
+const Order = require('./Order')(sequelize, DataTypes);
+const OrderItem = require('./OrderItem')(sequelize, DataTypes);
 
 // Configurar asociaciones entre modelos
 Product.belongsTo(Category, {
@@ -36,12 +34,25 @@ Tag.belongsToMany(Product, {
   otherKey: 'ProductId',
   as: 'products'
 });
-module.exports = {
+const db = {
   sequelize,
   Sequelize,
   DataTypes,
+  User,
+  Product,
   Category,
   Tag,
-  Product,
-  ProductTag
+  ProductTag,
+  Order,
+  OrderItem
 };
+
+// Llamar a associate si existe en alguno de los modelos
+Object.keys(db).forEach(modelName => {
+  const model = db[modelName];
+  if (model && model.associate) {
+    model.associate(db);
+  }
+});
+
+module.exports = db;

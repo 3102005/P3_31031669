@@ -6,6 +6,11 @@ const YAML = require('yamljs');
 const swaggerUi = require('swagger-ui-express');
 const { sequelize, Category, Tag, Product } = require('./models/index');
 
+// Provide a default JWT secret when not set so tests that sign tokens using
+// `process.env.JWT_SECRET` don't fail. This is safe because middleware also
+// falls back to the same default when verifying tokens.
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'avengers-funko-secret-key';
+
 const seedDatabase = async () => {
   try {
     await sequelize.sync({ force: false });
@@ -139,6 +144,10 @@ app.use('/users', require('./routes/users'));
 app.use('/products', productsRouter);
 app.use('/categories', categoriesRouter);
 app.use('/tags', tagsRouter);
+// Ordenes (rutas protegidas)
+app.use('/api/orders', require('./routes/orderRoutes'));
+// Alias: permitir también `/orders` por compatibilidad (evita 404s por rutas alternativas)
+app.use('/orders', require('./routes/orderRoutes'));
 // Evitar montajes duplicados: los routers principales ya están importados arriba.
 
 // Ruta pública de producto 'self-healing' accesible desde la raíz (/p/:id-:slug)
@@ -177,5 +186,6 @@ app.use((err, req, res, next) => {
     message: err && err.message ? err.message : 'Internal Server Error'
   });
 });
+
 
 module.exports = app;
