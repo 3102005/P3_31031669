@@ -51,6 +51,53 @@ class ProductRepository {
     await product.destroy();
     return true;
   }
+
+  async checkAndReserveStock(productId, quantity, transaction = null) {
+    const product = await this.model.findByPk(productId, {
+      transaction,
+      lock: transaction ? true : false // Bloquea la fila en transacción
+    });
+
+    if (!product) {
+      throw new Error(`Producto con ID ${productId} no encontrado`);
+    }
+
+    if (product.stock < quantity) {
+      throw new Error(`Stock insuficiente para ${product.name}. Disponible: ${product.stock}, Solicitado: ${quantity}`);
+    }
+
+    return product;
+  }
+
+  /**
+   * Actualiza stock (disminuir)
+   */
+  async updateStock(productId, quantityToDecrease, transaction = null) {
+    const product = await this.model.findByPk(productId, { transaction });
+    
+    if (!product) {
+      throw new Error(`Producto no encontrado: ${productId}`);
+    }
+
+    product.stock -= quantityToDecrease;
+    
+    if (product.stock < 0) {
+      throw new Error(`Stock no puede ser negativo para ${product.name}`);
+    }
+
+    await product.save({ transaction });
+    return product;
+  }
+
+  /**
+   * Obtiene precios actuales de productos
+   */
+  async getProductsWithPrices(productIds) {
+    return await this.model.findAll({
+      where: { id: productIds },
+      attributes: ['id', 'name', 'price', 'stock']
+    });
+  }
 }
 
 module.exports = ProductRepository;

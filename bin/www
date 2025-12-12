@@ -39,7 +39,8 @@ process.on('uncaughtException', (err) => {
 async function startServer() {
   try {
     await syncDatabase();
-    server.listen(port);
+    // Bind explicitly to 0.0.0.0 to ensure the server is reachable from localhost (IPv4/IPv6)
+    server.listen(port, '0.0.0.0');
     console.log('Starting server (listen called) on port ' + port);
     server.on('error', onError);
     server.on('listening', onListening);
@@ -47,8 +48,8 @@ async function startServer() {
     console.error('Failed to sync database, starting server anyway. Error:', err);
     // Intentamos arrancar el servidor aunque falle la sincronización para que la API esté disponible
     try {
-      server.listen(port);
-      console.log('Starting server (fallback) on port ' + port);
+    server.listen(port, '0.0.0.0');
+    console.log('Starting server (fallback) on port ' + port);
       server.on('error', onError);
       server.on('listening', onListening);
     } catch (e) {
