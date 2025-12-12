@@ -16,7 +16,9 @@ exports.getTagById = asyncHandler(async (req, res) => {
 });
 
 exports.createTag = asyncHandler(async (req, res) => {
-  const tag = await Tag.create(req.body);
+  // Use findOrCreate to make endpoint idempotent and avoid throwing on
+  // unique constraint, returning the existing tag if it already exists.
+  const [tag, created] = await Tag.findOrCreate({ where: { name: req.body.name }, defaults: req.body });
   res.status(201).jsend.success(tag);
 });
 

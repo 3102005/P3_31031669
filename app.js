@@ -6,6 +6,13 @@ const YAML = require('yamljs');
 const swaggerUi = require('swagger-ui-express');
 const { sequelize, Category, Tag, Product } = require('./models/index');
 
+// DEBUG: show current environment at app load (helps diagnosis during tests)
+if (process.env.NODE_ENV) {
+  console.log('DEBUG ENV at app startup:', process.env.NODE_ENV);
+} else {
+  console.log('DEBUG ENV at app startup: (not set)');
+}
+
 // Provide a default JWT secret when not set so tests that sign tokens using
 // `process.env.JWT_SECRET` don't fail. This is safe because middleware also
 // falls back to the same default when verifying tokens.

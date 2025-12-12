@@ -26,7 +26,7 @@ const register = async (req, res) => {
     const user = await User.create(createPayload);
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { id: user.id, userId: user.id, email: user.email },
       process.env.JWT_SECRET || 'avengers-funko-secret-key',
       { expiresIn: '24h' }
     );
@@ -67,6 +67,9 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (process.env.NODE_ENV === 'test') {
+      console.log('DEBUG authController.login received:', { email, password });
+    }
 
     if (!email || !password) {
       return res.status(400).json({
@@ -76,7 +79,7 @@ const login = async (req, res) => {
     }
 
     // During tests allow a simple login shortcut for the default admin
-      if (process.env.NODE_ENV === 'test' && email === 'admin@example.com' && password === 'password') {
+    if (process.env.NODE_ENV === 'test' && email === 'admin@example.com' && password === 'password') {
         const token = jwt.sign(
           { userId: 'test-admin', email },
           process.env.JWT_SECRET || 'avengers-funko-secret-key',
@@ -103,7 +106,7 @@ const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { id: user.id, userId: user.id, email: user.email },
       process.env.JWT_SECRET || 'avengers-funko-secret-key',
       { expiresIn: '24h' }
     );
