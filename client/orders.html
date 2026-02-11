@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mis Pedidos</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <main>
+    <h2>Mis Pedidos</h2>
+    <div id="orders"></div>
+  </main>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script>
+    if(!localStorage.getItem('token')){
+      window.location.href = '/login.html';
+    }
+    async function load(){
+      try{
+        const res = await apiGet('/api/orders', true);
+        const list = res.data || [];
+        const out = list.map(o=>`<div class="card" style="margin-bottom:12px;">Pedido #${o.id} - Total: ${o.total || 'N/A'}<div>Items: ${o.items ? o.items.length : 0}</div></div>`).join('');
+        document.getElementById('orders').innerHTML = out || '<div>No hay pedidos</div>';
+      }catch(err){
+        ui.toast('Error cargando pedidos','error');
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

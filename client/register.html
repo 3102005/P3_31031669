@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Registro</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <main>
+    <h2>Registro</h2>
+    <form id="register-form" class="card">
+      <label>Nombre completo: <input name="nombreCompleto" required placeholder="Tu nombre completo"></label>
+      <label>Email: <input type="email" name="email" required placeholder="tu@email.com"></label>
+      <label>Contraseña: <input type="password" name="password" required placeholder="Mínimo 6 caracteres"></label>
+      <label>Cédula: <input name="cedula" required placeholder="31031669"></label>
+      <div class="actions"><button type="submit" class="btn primary">Registrarse</button></div>
+    </form>
+    <div id="msg" aria-live="polite"></div>
+  </main>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script>
+    const form = document.getElementById('register-form');
+    const msg = document.getElementById('msg');
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(form);
+      const body = {
+        nombreCompleto: fd.get('nombreCompleto'),
+        email: fd.get('email'),
+        password: fd.get('password'),
+        cedula: fd.get('cedula')
+      };
+      ui.setLoading(true, form.querySelector('button'));
+      try{
+        const res = await apiPost('/auth/register', body);
+        ui.toast('Registro exitoso. Por favor inicia sesión.', 'success');
+        form.reset();
+        setTimeout(()=> window.location.href = '/login.html', 800);
+      }catch(err){
+        // Mostrar mensaje de error devuelto por la API (si es JSON)
+        let text = 'Error al registrarse';
+        try{
+          const bodyText = await (err && err.message ? Promise.resolve(err.message) : Promise.resolve(''));
+          text = bodyText;
+          // si el servidor devolvió JSON con mensaje, intentar parsearlo
+          try{
+            const maybeJson = JSON.parse(bodyText);
+            if(maybeJson && maybeJson.message) text = maybeJson.message;
+          }catch(e){/* no es JSON */}
+        }catch(e){}
+        ui.toast(text, 'error');
+      }finally{
+        ui.setLoading(false, form.querySelector('button'));
+      }
+    });
+  </script>
+</body>
+</html>

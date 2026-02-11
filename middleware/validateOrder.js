@@ -11,14 +11,25 @@ const orderSchema = Joi.object({
   paymentDetails: Joi.object({
     cardToken: Joi.string().required(),
     currency: Joi.string().valid('USD', 'EUR', 'COP').default('USD')
-  }).required()
+  }).required(),
+  // Allow optional shipping address at top-level (frontend may include it)
+  address: Joi.string().max(1024).optional()
 });
 
 const validateOrder = (req, res, next) => {
   const { error } = orderSchema.validate(req.body, { abortEarly: false });
   
   if (error) {
-    const messages = error.details.map(detail => detail.message);
+    // Debug: log request body and validation details to help diagnose client issues
+    try {
+      console.error('Order validation failed. Request body:', JSON.stringify(req.body));
+    } catch (e) {
+      console.error('Order validation failed. Request body (could not stringify)');
+    }
+    const messages = error.details.map(detail => {
+      console.error('Validation detail:', detail);
+      return detail.message;
+    });
     return res.status(400).json({
       status: 'fail',
       message: 'Validación fallida',

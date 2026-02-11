@@ -2,6 +2,7 @@ const { Sequelize } = require('sequelize');
 
 const sequelize = new Sequelize({
   dialect: 'sqlite',
+  // Use test sqlite file for test env (keeps compatibility with test expectations)
   storage: process.env.NODE_ENV === 'test' ? './test.sqlite' : './database.sqlite',
   logging: false
 });

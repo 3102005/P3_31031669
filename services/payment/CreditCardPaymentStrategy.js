@@ -33,6 +33,18 @@ class CreditCardPaymentStrategy extends PaymentStrategy {
         transactionId: 'txn_test_' + Date.now()
       };
     }
+    // Si la URL configurada apunta a la API fake, validar token simulado
+    const isFakePaymentApi = String(this.paymentApiUrl).includes('fakepayment.onrender.com') || String(process.env.PAYMENT_API_URL || '').includes('fakepayment');
+    if (isFakePaymentApi) {
+      // Aceptar sólo tokens que sigan el formato simulado `tok_...`
+      const token = paymentDetails && paymentDetails.cardToken ? String(paymentDetails.cardToken) : '';
+      const fakeTokenPattern = /^tok_[A-Za-z0-9_-]{6,}$/;
+      if (!fakeTokenPattern.test(token)) {
+        return { success: false, error: 'Token inválido para la pasarela fake. Use tokens que comiencen con "tok_".' };
+      }
+      // No llamar al gateway real cuando la URL es la fake: simular pago exitoso
+      return { success: true, transactionId: 'txn_fake_' + Date.now(), message: 'Pago simulado (fake payment API)' };
+    }
     try {
       // Validar datos requeridos
       if (!paymentDetails.cardToken || !paymentDetails.currency) {
@@ -56,6 +68,23 @@ class CreditCardPaymentStrategy extends PaymentStrategy {
         } else {
           headers[apiKeyHeader] = apiKey;
         }
+      }
+
+      // Debug: log whether an API key is configured and which header will be used.
+      try {
+        const maskedKey = apiKey ? (String(apiKey).slice(0, 4) + "****") : null;
+        console.info('[Payment] attempting payment', {
+          paymentApiUrl: this.paymentApiUrl,
+          apiKeyConfigured: !!apiKey,
+          apiKeyHeader,
+          maskedKey
+        });
+        // Log payload keys and header names (no header values)
+        console.debug('[Payment] payload keys:', Object.keys(payload));
+        console.debug('[Payment] headers:', Object.keys(headers));
+      } catch (e) {
+        // never fail the payment flow because of logging
+        console.warn('[Payment] debug logging failed:', e && e.message);
       }
 
       // Llamada a la API externa

@@ -5,8 +5,10 @@
   "scripts": {
     "start": "node ./bin/www",
     "dev": "nodemon ./bin/www",
-    "test": "jest --forceExit --detectOpenHandles",
-    "build": "echo 'Build completed'",
+    "start:simulate": "cross-env PAYMENT_SIMULATE=true PORT=3001 node ./bin/www",
+    "test": "jest --runInBand --forceExit --detectOpenHandles",
+    "build": "npm run build-client && echo 'Build completed'",
+    "build-client": "node ./scripts/build-client.js",
     "test:watch": "jest --watch",
     "db:sync": "node scripts/sync-db.js"
   },
@@ -36,7 +38,8 @@
     "nodemon": "^3.1.10",
     "sequelize-cli": "^6.6.3",
     "sequelize-mock": "^0.10.2",
-    "supertest": "^6.3.3"
+    "supertest": "^6.3.3",
+    "cross-env": "^7.0.3"
   },
   "engines": {
     "node": "18.x"

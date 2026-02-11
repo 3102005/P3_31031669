@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Carrito</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <main>
+    <h2>Carrito</h2>
+    <div id="cart-contents"></div>
+    <div>
+      <button id="checkout">Comprar artículos</button>
+    </div>
+  </main>
+  <script src="/js/api.js"></script>
+  <script>
+    function render(){
+      const cart = JSON.parse(localStorage.getItem('cart')||'[]');
+      const container = document.getElementById('cart-contents');
+      if(cart.length===0) {
+        container.textContent = 'Carrito vacío';
+        return;
+      }
+      const rows = cart.map(it=>{
+        const subtotal = (it.price * it.qty).toFixed(2);
+        return `<div style="margin-bottom:8px">${it.title} x ${it.qty} - $${Number(it.price).toFixed(2)} = $${subtotal}</div>`;
+      }).join('');
+      const total = cart.reduce((s,i)=>s + (Number(i.price) * i.qty),0).toFixed(2);
+      container.innerHTML = rows + `<div style="margin-top:12px"><strong>Total: $${total}</strong></div>`;
+    }
+    document.getElementById('checkout').addEventListener('click', ()=>{
+      if(!localStorage.getItem('token')){
+        return window.location.href = '/login.html';
+      }
+      window.location.href = '/checkout.html';
+    });
+    render();
+  </script>
+</body>
+</html>

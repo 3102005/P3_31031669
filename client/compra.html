@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tienda Funko - Catálogo</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <h1>Tienda Funko</h1>
+      <nav>
+        <a href="/">Catálogo</a> |
+        <a href="/login.html">Login</a> |
+        <a href="/register.html">Registro</a> |
+        <a href="/cart.html">Carrito (<span id="cart-count">0</span>)</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="app" class="card" style="max-width:1100px;margin:20px auto;">
+    <section>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <h2 style="margin:0 0 6px 0">Catálogo</h2>
+          <div class="muted">Explora nuestros Funko Pop, filtra por personaje o película</div>
+        </div>
+        <div>
+          <input id="q" placeholder="Buscar por nombre o personaje" style="width:320px;padding:8px;border-radius:8px;border:1px solid #e6e6e6" />
+          <button id="search" class="btn ghost">Buscar</button>
+        </div>
+      </div>
+
+      <div id="filters"></div>
+      <div id="products"></div>
+      <div id="pagination"></div>
+    </section>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
+
+
+
+
+
+

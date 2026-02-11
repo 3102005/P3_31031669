@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Checkout</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <main>
+    <h2>Checkout</h2>
+    <form id="checkout-form">
+      <label>Dirección: <input name="address" required></label><br>
+      <label>Nombre en tarjeta: <input name="card_name" required></label><br>
+      <label>Número de tarjeta (simulado): <input name="card_number" required></label><br>
+      <label>Expiración: <input name="card_exp" placeholder="MM/YY" required></label><br>
+      <label>Moneda:
+        <select name="currency">
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="COP">COP</option>
+        </select>
+      </label><br>
+      <button type="submit">Pagar</button>
+    </form>
+    <div id="msg"></div>
+  </main>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script>
+    // Require login
+    if(!localStorage.getItem('token')){
+      window.location.href = '/login.html';
+    }
+    const form = document.getElementById('checkout-form');
+    const msg = document.getElementById('msg');
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const cart = JSON.parse(localStorage.getItem('cart')||'[]');
+      if(cart.length===0){ ui.toast('Carrito vacío','error'); return; }
+      // Map items to expected API shape (quantity)
+      const items = cart.map(i=>({ productId: i.id, quantity: i.qty }));
+      // Simulate tokenization of card (in real app use payment gateway)
+      const cardToken = 'tok_' + Math.random().toString(36).slice(2,12);
+      const currency = form.currency.value || 'USD';
+      const body = {
+        items,
+        paymentMethod: 'CreditCard',
+        paymentDetails: {
+          cardToken,
+          currency
+        },
+        address: form.address.value
+      };
+      ui.setLoading(true, form.querySelector('button'));
+      try{
+        const res = await apiPost('/api/orders', body, true);
+        // Mostrar detalles del pago devueltos por el servidor
+        const order = res && res.data && res.data.order ? res.data.order : null;
+        if(order){
+          ui.toast(`Compra exitosa - Total: $${Number(order.totalAmount).toFixed(2)} Tx: ${order.transactionId || 'N/A'}`,'success',6000);
+        } else {
+          ui.toast('Compra exitosa','success');
+        }
+        localStorage.removeItem('cart');
+        setTimeout(()=> window.location.href='/compra.html' , 1200);
+      }catch(err){
+        ui.toast(err && err.message ? err.message : 'Error en el pago','error');
+      }finally{
+        ui.setLoading(false, form.querySelector('button'));
+      }
+    });
+  </script>
+</body>
+</html>

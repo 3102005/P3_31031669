@@ -37,6 +37,37 @@ const seedDatabase = async () => {
       { name: 'jumbo-size' }
     ], { ignoreDuplicates: true });
 
+    // Si no existen productos, crear algunos de ejemplo para la UI
+    const productCount = await Product.count();
+    if (productCount === 0) {
+      const avengersCat = categories.find(c => c.name === 'Avengers') || categories[0];
+      await Product.bulkCreate([
+        {
+          name: 'Iron Man Mark LXXXV',
+          description: 'Funko Pop de Iron Man con traje de Endgame',
+          price: 29.99,
+          stock: 50,
+          sku: 'AVG001',
+          movie: 'Avengers: Endgame',
+          character: 'Iron Man',
+          edition: 'Standard',
+          CategoryId: avengersCat.id
+        },
+        {
+          name: 'Captain America Shield',
+          description: 'Funko Pop de Captain America con escudo',
+          price: 24.50,
+          stock: 30,
+          sku: 'AVG002',
+          movie: 'Avengers: Endgame',
+          character: 'Captain America',
+          edition: 'Standard',
+          CategoryId: avengersCat.id
+        }
+      ]);
+      console.log('✅ Sample products created');
+    }
+
     console.log('✅ Database seeded successfully');
   } catch (error) {
     console.error('❌ Seeding error:', error);
